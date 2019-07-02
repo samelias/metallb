@@ -65,7 +65,7 @@ manifest:
 
 .PHONY: build
 build:
-	$(GOCMD) install -v -ldflags="-X go.universe.tf/metallb/internal/version.gitCommit=$(GITCOMMIT) -X go.universe.tf/metallb/internal/version.gitBranch=$(GITBRANCH)" ./controller ./speaker ./test-bgp-router
+	GOOS=linux GARCH=amd64 GOARCH=amd64 $(GOCMD) install -v -ldflags="-X go.universe.tf/metallb/internal/version.gitCommit=$(GITCOMMIT) -X go.universe.tf/metallb/internal/version.gitBranch=$(GITBRANCH)" ./controller ./speaker ./test-bgp-router
 
 .PHONY: start-minikube
 start-minikube:

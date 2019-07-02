@@ -2,9 +2,11 @@ module go.universe.tf/metallb
 
 require (
 	cloud.google.com/go v0.33.1 // indirect
+	git.fd.io/govpp.git v0.0.0-20190701113932-a27ced54ee2f // indirect
 	github.com/BurntSushi/toml v0.3.1 // indirect
 	github.com/armon/go-radix v1.0.0 // indirect
 	github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973 // indirect
+	github.com/coreos/etcd v3.3.13+incompatible // indirect
 	github.com/dgryski/go-farm v0.0.0-20180109070241-2de33835d102 // indirect
 	github.com/eapache/channels v1.1.0 // indirect
 	github.com/eapache/queue v1.1.0 // indirect
@@ -26,6 +28,8 @@ require (
 	github.com/json-iterator/go v1.1.5 // indirect
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/kr/pty v1.1.3 // indirect
+	github.com/ligato/cn-infra v2.1.0+incompatible
+	github.com/ligato/vpp-agent v2.1.1+incompatible
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
 	github.com/mdlayher/arp v0.0.0-20181025151936-a1263dc4682b
 	github.com/mdlayher/ethernet v0.0.0-20181025151932-d5c0834fe478
@@ -35,6 +39,7 @@ require (
 	github.com/mitchellh/mapstructure v1.1.2 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.1 // indirect
+	github.com/namsral/flag v1.7.4-pre // indirect
 	github.com/onsi/ginkgo v1.7.0 // indirect
 	github.com/onsi/gomega v1.4.3 // indirect
 	github.com/osrg/gobgp v0.0.0-20181128164521-7ebcb44a51ff

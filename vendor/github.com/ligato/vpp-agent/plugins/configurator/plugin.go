@@ -18,23 +18,23 @@ import (
 	"git.fd.io/govpp.git/api"
 	"github.com/ligato/vpp-agent/api/models/vpp"
 	"github.com/ligato/vpp-agent/plugins/orchestrator"
-	ipsecvppcalls "github.com/ligato/vpp-agent/plugins/vppv2/ipsecplugin/vppcalls"
-	puntvppcalls "github.com/ligato/vpp-agent/plugins/vppv2/puntplugin/vppcalls"
+	ipsecvppcalls "github.com/ligato/vpp-agent/plugins/vpp/ipsecplugin/vppcalls"
+	puntvppcalls "github.com/ligato/vpp-agent/plugins/vpp/puntplugin/vppcalls"
 
 	"github.com/ligato/cn-infra/infra"
 	"github.com/ligato/cn-infra/rpc/grpc"
 
 	rpc "github.com/ligato/vpp-agent/api/configurator"
 	"github.com/ligato/vpp-agent/plugins/govppmux"
-	iflinuxcalls "github.com/ligato/vpp-agent/plugins/linuxv2/ifplugin/linuxcalls"
-	l3linuxcalls "github.com/ligato/vpp-agent/plugins/linuxv2/l3plugin/linuxcalls"
-	aclvppcalls "github.com/ligato/vpp-agent/plugins/vppv2/aclplugin/vppcalls"
-	"github.com/ligato/vpp-agent/plugins/vppv2/ifplugin"
-	ifvppcalls "github.com/ligato/vpp-agent/plugins/vppv2/ifplugin/vppcalls"
-	"github.com/ligato/vpp-agent/plugins/vppv2/l2plugin"
-	l2vppcalls "github.com/ligato/vpp-agent/plugins/vppv2/l2plugin/vppcalls"
-	l3vppcalls "github.com/ligato/vpp-agent/plugins/vppv2/l3plugin/vppcalls"
-	natvppcalls "github.com/ligato/vpp-agent/plugins/vppv2/natplugin/vppcalls"
+	iflinuxcalls "github.com/ligato/vpp-agent/plugins/linux/ifplugin/linuxcalls"
+	l3linuxcalls "github.com/ligato/vpp-agent/plugins/linux/l3plugin/linuxcalls"
+	aclvppcalls "github.com/ligato/vpp-agent/plugins/vpp/aclplugin/vppcalls"
+	"github.com/ligato/vpp-agent/plugins/vpp/ifplugin"
+	ifvppcalls "github.com/ligato/vpp-agent/plugins/vpp/ifplugin/vppcalls"
+	"github.com/ligato/vpp-agent/plugins/vpp/l2plugin"
+	l2vppcalls "github.com/ligato/vpp-agent/plugins/vpp/l2plugin/vppcalls"
+	l3vppcalls "github.com/ligato/vpp-agent/plugins/vpp/l3plugin/vppcalls"
+	natvppcalls "github.com/ligato/vpp-agent/plugins/vpp/natplugin/vppcalls"
 )
 
 // Plugin registers VPP GRPC services in *grpc.Server.
@@ -52,8 +52,8 @@ type Plugin struct {
 type Deps struct {
 	infra.PluginDeps
 	GRPCServer  grpc.Server
-	Orch        *orchestrator.Plugin
-	GoVppmux    govppmux.TraceAPI
+	Dispatch    orchestrator.Dispatcher
+	GoVppmux    govppmux.StatsAPI
 	VPPIfPlugin ifplugin.API
 	VPPL2Plugin *l2plugin.L2Plugin
 }
@@ -61,8 +61,9 @@ type Deps struct {
 // Init sets plugin child loggers
 func (p *Plugin) Init() error {
 	p.configurator.log = p.Log.NewLogger("configurator")
-	p.configurator.notifyService.log = p.Log.NewLogger("configurator-notify")
-	p.configurator.dispatch = p.Orch
+	p.configurator.dumpService.log = p.Log.NewLogger("dump")
+	p.configurator.notifyService.log = p.Log.NewLogger("notify")
+	p.configurator.dispatch = p.Dispatch
 
 	if err := p.initHandlers(); err != nil {
 		return err
@@ -107,17 +108,13 @@ func (p *Plugin) initHandlers() (err error) {
 	dhcpIndexes := p.VPPIfPlugin.GetDHCPIndex()
 
 	// Initialize VPP handlers
-	p.configurator.aclHandler = aclvppcalls.NewACLVppHandler(p.vppChan, p.dumpChan, ifIndexes)
-	p.configurator.ifHandler = ifvppcalls.NewIfVppHandler(p.vppChan, p.Log)
-	p.configurator.natHandler = natvppcalls.NewNatVppHandler(p.vppChan, ifIndexes, dhcpIndexes, p.Log)
-	p.configurator.bdHandler = l2vppcalls.NewBridgeDomainVppHandler(p.vppChan, ifIndexes, p.Log)
-	p.configurator.fibHandler = l2vppcalls.NewFIBVppHandler(p.vppChan, ifIndexes, bdIndexes, p.Log)
-	p.configurator.xcHandler = l2vppcalls.NewXConnectVppHandler(p.vppChan, ifIndexes, p.Log)
-	p.configurator.arpHandler = l3vppcalls.NewArpVppHandler(p.vppChan, ifIndexes, p.Log)
-	p.configurator.pArpHandler = l3vppcalls.NewProxyArpVppHandler(p.vppChan, ifIndexes, p.Log)
-	p.configurator.rtHandler = l3vppcalls.NewRouteVppHandler(p.vppChan, ifIndexes, p.Log)
-	p.configurator.ipsecHandler = ipsecvppcalls.NewIPsecVppHandler(p.vppChan, ifIndexes, p.Log)
-	p.configurator.puntHandler = puntvppcalls.NewPuntVppHandler(p.vppChan, ifIndexes, p.Log)
+	p.configurator.aclHandler = aclvppcalls.CompatibleACLVppHandler(p.vppChan, p.dumpChan, ifIndexes, p.Log)
+	p.configurator.ifHandler = ifvppcalls.CompatibleInterfaceVppHandler(p.vppChan, p.Log)
+	p.configurator.natHandler = natvppcalls.CompatibleNatVppHandler(p.vppChan, ifIndexes, dhcpIndexes, p.Log)
+	p.configurator.l2Handler = l2vppcalls.CompatibleL2VppHandler(p.vppChan, ifIndexes, bdIndexes, p.Log)
+	p.configurator.l3Handler = l3vppcalls.CompatibleL3VppHandler(p.vppChan, ifIndexes, p.Log)
+	p.configurator.ipsecHandler = ipsecvppcalls.CompatibleIPSecVppHandler(p.vppChan, ifIndexes, p.Log)
+	p.configurator.puntHandler = puntvppcalls.CompatiblePuntVppHandler(p.vppChan, ifIndexes, p.Log)
 
 	// Linux indexes and handlers
 	p.configurator.linuxIfHandler = iflinuxcalls.NewNetLinkHandler()
